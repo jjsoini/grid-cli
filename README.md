@@ -4,21 +4,44 @@ Bash scripts to overlay square or hexagonal grids on images using ImageMagick.
 
 ## Requirements
 
-- [ImageMagick](https://imagemagick.org/) (`magick` command)
-- `bc` (for hex grid calculations)
+- [ImageMagick](https://imagemagick.org/) (`magick` command) - easiest to install using [Homebrew](https://brew.sh/)
+
+```bash
+brew install imagemagick
+```
+
+## Installation
+
+```bash
+git clone https://github.com/jjsoini/grid-cli.git
+cd grid-cli
+sudo make install
+```
+
+This installs `grid` and `hex` to `/usr/local/bin`. To install elsewhere:
+
+```bash
+make install PREFIX=~/.local
+```
+
+To uninstall:
+
+```bash
+sudo make uninstall
+```
 
 ## Usage
 
 ### Square grid
 
 ```
-./grid input.jpg output.png squares_across [stroke_color] [stroke_width]
+grid input.jpg output.png squares_across [stroke_color] [stroke_width]
 ```
 
 ### Hex grid
 
 ```
-./hex input.jpg output.png hexes_high [stroke_color] [stroke_width]
+hex input.jpg output.png hexes_high [stroke_color] [stroke_width]
 ```
 
 ### Parameters
@@ -35,8 +58,8 @@ Bash scripts to overlay square or hexagonal grids on images using ImageMagick.
 
 ```bash
 # 10-column square grid
-./grid photo.jpg photo_grid.png 10
+grid photo.jpg photo_grid.png 10
 
 # Hex grid, 8 rows high, red lines
-./hex photo.jpg photo_hex.png 8 red 3
+hex photo.jpg photo_hex.png 8 red 3
 ```
