@@ -1,0 +1,73 @@
+#!/bin/bash
+
+# Usage:
+# hex input.jpg output.png hexes_high [stroke_color] [stroke_width]
+
+input="$1"
+output="$2"
+hexes_high="$3"
+stroke="${4:-rgba(0,0,0,0.5)}"      # Default stroke: semi-transparent black
+stroke_width="${5:-2}"              # Default stroke width: 2px
+
+if [ -z "$input" ] || [ -z "$output" ] || [ -z "$hexes_high" ]; then
+  echo "Usage: $0 input_image output_image hexes_high [stroke_color] [stroke_width]"
+  exit 1
+fi
+
+# Get image dimensions
+width=$(magick identify -format "%w" "$input")
+height=$(magick identify -format "%h" "$input")
+
+# Correct hex dimensions
+hex_height=$(( height / hexes_high ))
+hex_width=$(printf "%.0f" "$(echo "$hex_height * 1.1547" | bc)")
+
+# Create transparent grid
+grid="hexgrid.png"
+magick -size ${width}x${height} xc:none "$grid"
+
+# Build drawing commands
+draw_cmd=""
+
+col=0
+step_x=$(printf "%.0f" "$(echo "$hex_width * 0.75" | bc)")
+
+for ((x=0; x<=width+hex_width; x+=step_x)); do
+  col_offset=$(( col % 2 ))
+  for ((y=0; y<=height+hex_height; y+=hex_height)); do
+    center_x=$x
+    center_y=$(( y + (col_offset * hex_height / 2) ))
+
+    p1_x=$(( center_x + hex_width/2 ))
+    p1_y=$center_y
+
+    p2_x=$(( center_x + hex_width/4 ))
+    p2_y=$(( center_y + hex_height/2 ))
+
+    p3_x=$(( center_x - hex_width/4 ))
+    p3_y=$p2_y
+
+    p4_x=$(( center_x - hex_width/2 ))
+    p4_y=$center_y
+
+    p5_x=$p3_x
+    p5_y=$(( center_y - hex_height/2 ))
+
+    p6_x=$p2_x
+    p6_y=$p5_y
+
+    draw_cmd="$draw_cmd polygon $p1_x,$p1_y $p2_x,$p2_y $p3_x,$p3_y $p4_x,$p4_y $p5_x,$p5_y $p6_x,$p6_y "
+  done
+  ((col++))
+done
+
+# Draw hexes
+magick "$grid" -stroke "$stroke" -strokewidth "$stroke_width" -fill none -draw "$draw_cmd" "$grid"
+
+# Composite grid over original
+magick composite -compose over "$grid" "$input" "$output"
+
+# Cleanup
+rm "$grid"
+
+echo "✅ Done! Output saved to $output"

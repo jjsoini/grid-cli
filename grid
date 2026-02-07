@@ -1,0 +1,55 @@
+#!/bin/bash
+
+# Usage:
+# ./square_grid_overlay.sh input.jpg output.png squares_across [stroke_color] [stroke_width]
+
+input="$1"
+output="$2"
+squares_across="$3"
+stroke="${4:-rgba(0,0,0,0.5)}"    # Default stroke: semi-transparent black
+stroke_width="${5:-2}"            # Default stroke width: 2px
+
+if [ -z "$input" ] || [ -z "$output" ] || [ -z "$squares_across" ]; then
+  echo "Usage: $0 input_image output_image squares_across [stroke_color] [stroke_width]"
+  exit 1
+fi
+
+# Get image dimensions
+width=$(magick identify -format "%w" "$input")
+height=$(magick identify -format "%h" "$input")
+
+# Calculate exact cell width
+cell_width=$(awk "BEGIN {print $width / $squares_across}")
+cell_height=$cell_width  # Square cells
+
+# Create transparent grid image
+grid="squaregrid.png"
+magick -size ${width}x${height} xc:none "$grid"
+
+# Build drawing commands
+draw_cmd=""
+
+# Vertical lines (exactly at each division)
+for ((i=0; i<=squares_across; i++)); do
+  x=$(awk "BEGIN {printf \"%.2f\", $i * $cell_width}")
+  draw_cmd="$draw_cmd line $x,0 $x,$height "
+done
+
+# Horizontal lines (every cell_height)
+y=0
+while (( $(awk "BEGIN {print ($y <= $height)}") )); do
+  y_pos=$(awk "BEGIN {printf \"%.2f\", $y}")
+  draw_cmd="$draw_cmd line 0,$y_pos $width,$y_pos "
+  y=$(awk "BEGIN {print $y + $cell_height}")
+done
+
+# Draw grid
+magick "$grid" -stroke "$stroke" -strokewidth "$stroke_width" -fill none -draw "$draw_cmd" "$grid"
+
+# Composite grid over original
+magick composite -compose over "$grid" "$input" "$output"
+
+# Cleanup
+rm "$grid"
+
+echo "✅ Done! Output saved to $output"

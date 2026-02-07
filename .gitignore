@@ -1,0 +1,11 @@
+# ImageMagick temp files
+squaregrid.png
+hexgrid.png
+
+# macOS
+.DS_Store
+
+# Editor
+*.swp
+*.swo
+*~
